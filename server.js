@@ -1,3 +1,4 @@
+// 🌐 Importation des modules nécessaires
 const express = require("express");
 const mysql = require("mysql2");
 const bcrypt = require("bcrypt");
@@ -6,19 +7,21 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const QRCode = require("qrcode"); // 📌 QR Code pour les billets
 
+// 🚀 Initialisation de l'application Express
 const app = express();
-const PORT = 3000;
-const SECRET_KEY = "supersecretkey";
+const PORT = process.env.PORT || 3000; // ✅ Port dynamique pour Render
+const SECRET_KEY = "supersecretkey"; // 🔐 Clé secrète JWT
 
+// 🔧 Middleware
 app.use(cors());
 app.use(bodyParser.json());
 
-// Connexion MySQL
+// 📚 Connexion à la base de données MySQL avec variables d’environnement
 const db = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "Cinephoria",
+  host: process.env.DB_HOST || "localhost",
+  user: process.env.DB_USER || "root",
+  password: process.env.DB_PASSWORD || "",
+  database: process.env.DB_NAME || "Cinephoria",
 });
 
 db.connect((err) => {
@@ -26,7 +29,7 @@ db.connect((err) => {
   else console.log("✅ Connecté à la base de données MySQL");
 });
 
-// Middleware Auth
+// 🔐 Middleware Auth
 const authenticateToken = (req, res, next) => {
   const token = req.header("Authorization");
   if (!token) return res.status(401).json({ error: "Accès refusé" });
@@ -185,12 +188,10 @@ app.post("/seances", authenticateToken, authorizeRole("Admin"), (req, res) => {
     [date, heure, salle_id, film_id],
     (err, result) => {
       if (err) return res.status(500).json({ error: err });
-      res
-        .status(201)
-        .json({
-          message: "Séance ajoutée avec succès",
-          seanceId: result.insertId,
-        });
+      res.status(201).json({
+        message: "Séance ajoutée avec succès",
+        seanceId: result.insertId,
+      });
     }
   );
 });
@@ -208,94 +209,7 @@ app.get("/seances", (req, res) => {
   );
 });
 
-// 💬 Contact
-app.post("/contact", authenticateToken, (req, res) => {
-  const { titre, description } = req.body;
-  const utilisateur_id = req.user ? req.user.id : null;
-
-  db.query(
-    "INSERT INTO Contact (utilisateur_id, titre, description) VALUES (?, ?, ?)",
-    [utilisateur_id, titre, description],
-    (err) => {
-      if (err) return res.status(500).json({ error: err });
-      res.status(201).json({ message: "Message envoyé avec succès !" });
-    }
-  );
-});
-
-app.get("/contact", authenticateToken, authorizeRole("Admin"), (req, res) => {
-  db.query(
-    `SELECT C.id, C.titre, C.description, C.date_envoi, U.nom AS utilisateur
-     FROM Contact C LEFT JOIN Utilisateur U ON C.utilisateur_id = U.id`,
-    (err, results) => {
-      if (err) return res.status(500).json({ error: err });
-      res.json(results);
-    }
-  );
-});
-
-// 🔧 Gestion des incidents (Application bureautique)
-app.post(
-  "/incidents",
-  authenticateToken,
-  authorizeRole("Employe"),
-  (req, res) => {
-    const { description, salle_id, urgence } = req.body;
-
-    db.query(
-      "INSERT INTO Incident (description, salle_id, urgence) VALUES (?, ?, ?)",
-      [description, salle_id, urgence],
-      (err, result) => {
-        if (err) return res.status(500).json({ error: err });
-        res
-          .status(201)
-          .json({
-            message: "Incident signalé avec succès",
-            incidentId: result.insertId,
-          });
-      }
-    );
-  }
-);
-
-app.get(
-  "/incidents",
-  authenticateToken,
-  authorizeRole("Employe"),
-  (req, res) => {
-    db.query(
-      `SELECT I.id, I.description, I.urgence, I.etat, I.date_signalement, S.numero AS salle
-     FROM Incident I
-     JOIN Salle S ON I.salle_id = S.id
-     ORDER BY I.urgence DESC, I.date_signalement DESC`,
-      (err, results) => {
-        if (err) return res.status(500).json({ error: err });
-        res.json(results);
-      }
-    );
-  }
-);
-
-app.put(
-  "/incidents/:id",
-  authenticateToken,
-  authorizeRole("Employe"),
-  (req, res) => {
-    const { etat } = req.body;
-    const incidentId = req.params.id;
-
-    db.query(
-      "UPDATE Incident SET etat = ? WHERE id = ?",
-      [etat, incidentId],
-      (err) => {
-        if (err) return res.status(500).json({ error: err });
-        res.json({ message: "État de l'incident mis à jour avec succès" });
-      }
-    );
-  }
-);
-
-// 🚀 Lancer le serveur
+// 🚀 Lancer le serveur (✨ Dynamique pour Render)
 app.listen(PORT, () => {
   console.log(`✅ Serveur API Cinephoria démarré sur le port ${PORT}`);
 });

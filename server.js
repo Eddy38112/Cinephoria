@@ -171,4 +171,23 @@ app.post("/reservations", authenticateToken, async (req, res) => {
 // 📅 Récupérer toutes les séances
 app.get("/seances", (req, res) => {
   db.query(
-    `SELECT Seanc
+    `SELECT Seance.id, Seance.date, Seance.heure, Salle.numero AS salle, Film.titre AS film
+     FROM Seance
+     JOIN Salle ON Seance.salle_id = Salle.id
+     JOIN Film ON Seance.film_id = Film.id`,
+    (err, results) => {
+      if (err) return res.status(500).json({ error: err });
+      res.json(results);
+    }
+  );
+});
+
+// 🌟 Endpoint de test
+app.get("/", (req, res) => {
+  res.send("🎬 API Cinephoria opérationnelle ! 🚀");
+});
+
+// 🚀 Lancement du serveur
+app.listen(PORT, () => {
+  console.log(`🎬 Serveur Cinephoria opérationnel sur le port ${PORT}`);
+});

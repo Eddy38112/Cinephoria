@@ -1,0 +1,23 @@
+{
+  "name": "cinephoria",
+  "version": "1.0.0",
+  "description": "Cinéphoria est une plateforme permettant aux utilisateurs de réserver des places de cinéma, aux employés de signaler des incidents et aux administrateurs de gérer les films et séances.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "body-parser": "^1.20.3",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.12.0"
+  }
+}

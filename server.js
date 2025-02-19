@@ -10,17 +10,17 @@ const app = express();
 const PORT = process.env.PORT || 10000;
 const SECRET_KEY = "supersecretkey";
 
-// Middleware
+// 🌐 Middleware
 app.use(cors());
 app.use(bodyParser.json());
 
-// 🌐 Connexion MySQL (Railway via Render)
+// 🌐 Connexion MySQL (Railway + Render - Frankfurt)
 const db = mysql.createConnection({
-  host: process.env.DB_HOST, // Railway host
-  user: process.env.DB_USER, // Railway user
-  password: process.env.DB_PASSWORD, // Railway password
-  database: process.env.DB_NAME, // Railway database
-  port: process.env.DB_PORT || 3306, // Railway port (par défaut 3306)
+  host: process.env.DB_HOST || "frankfurt-mysql-production.up.railway.app",
+  user: process.env.DB_USER || "root",
+  password: process.env.DB_PASSWORD || "p4ssw0rdSuperSecret",
+  database: process.env.DB_NAME || "Cinephoria",
+  port: process.env.DB_PORT || 3306,
 });
 
 // 📡 Connexion MySQL
@@ -44,14 +44,14 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// 🎯 Vérification du rôle
+// 🎯 Vérification du rôle utilisateur
 const authorizeRole = (role) => (req, res, next) => {
   if (req.user.role !== role)
     return res.status(403).json({ error: "Accès interdit" });
   next();
 };
 
-// 🔑 Inscription
+// 🔑 Inscription d'un utilisateur
 app.post("/auth/register", async (req, res) => {
   const { nom, email, mot_de_passe, role } = req.body;
   const hashedPassword = await bcrypt.hash(mot_de_passe, 10);
@@ -79,7 +79,7 @@ app.post("/auth/register", async (req, res) => {
   );
 });
 
-// 🔐 Connexion
+// 🔐 Connexion d'un utilisateur
 app.post("/auth/login", (req, res) => {
   const { email, mot_de_passe } = req.body;
   db.query(
@@ -105,7 +105,7 @@ app.post("/auth/login", (req, res) => {
   );
 });
 
-// 🎬 Tous les films
+// 🎬 Récupérer tous les films
 app.get("/films", (req, res) => {
   db.query("SELECT * FROM Film", (err, results) => {
     if (err) return res.status(500).json({ error: err });
@@ -129,7 +129,7 @@ app.post("/films", authenticateToken, authorizeRole("Admin"), (req, res) => {
   );
 });
 
-// 💬 Gestion des avis
+// 💬 Ajouter un avis
 app.post("/avis", authenticateToken, (req, res) => {
   const { film_id, note, commentaire } = req.body;
   const utilisateur_id = req.user.id;
@@ -144,7 +144,7 @@ app.post("/avis", authenticateToken, (req, res) => {
   );
 });
 
-// 🎟️ Réservations avec QR Code
+// 🎟️ Créer une réservation avec QR Code
 app.post("/reservations", authenticateToken, async (req, res) => {
   const { seance_id, nb_places } = req.body;
   const utilisateur_id = req.user.id;
@@ -171,18 +171,4 @@ app.post("/reservations", authenticateToken, async (req, res) => {
 // 📅 Récupérer toutes les séances
 app.get("/seances", (req, res) => {
   db.query(
-    `SELECT Seance.id, Seance.date, Seance.heure, Salle.numero AS salle, Film.titre AS film
-     FROM Seance
-     JOIN Salle ON Seance.salle_id = Salle.id
-     JOIN Film ON Seance.film_id = Film.id`,
-    (err, results) => {
-      if (err) return res.status(500).json({ error: err });
-      res.json(results);
-    }
-  );
-});
-
-// 🚀 Lancement du serveur
-app.listen(PORT, () => {
-  console.log(`✅ Serveur API Cinephoria démarré sur le port ${PORT}`);
-});
+    `SELECT Seanc

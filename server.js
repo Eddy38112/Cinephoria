@@ -1,4 +1,3 @@
-// 🌐 Importation des modules nécessaires
 const express = require("express");
 const mysql = require("mysql2");
 const bcrypt = require("bcrypt");
@@ -7,21 +6,20 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const QRCode = require("qrcode"); // 📌 QR Code pour les billets
 
-// 🚀 Initialisation de l'application Express
 const app = express();
-const PORT = process.env.PORT || 3000; // ✅ Port dynamique pour Render
-const SECRET_KEY = "supersecretkey"; // 🔐 Clé secrète JWT
+const PORT = process.env.PORT || 3000; // 🌐 Port dynamique pour Render
+const SECRET_KEY = "supersecretkey";
 
-// 🔧 Middleware
 app.use(cors());
 app.use(bodyParser.json());
 
-// 📚 Connexion à la base de données MySQL avec variables d’environnement
+// 💾 Connexion MySQL (Render + Railway avec variables d'environnement)
 const db = mysql.createConnection({
-  host: process.env.DB_HOST || "localhost",
-  user: process.env.DB_USER || "root",
-  password: process.env.DB_PASSWORD || "",
-  database: process.env.DB_NAME || "Cinephoria",
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  port: process.env.DB_PORT || 3306,
 });
 
 db.connect((err) => {
@@ -29,7 +27,7 @@ db.connect((err) => {
   else console.log("✅ Connecté à la base de données MySQL");
 });
 
-// 🔐 Middleware Auth
+// 🔒 Middleware Authentification
 const authenticateToken = (req, res, next) => {
   const token = req.header("Authorization");
   if (!token) return res.status(401).json({ error: "Accès refusé" });
@@ -169,33 +167,7 @@ app.post("/reservations", authenticateToken, async (req, res) => {
   );
 });
 
-app.get("/reservations/:userId", authenticateToken, (req, res) => {
-  db.query(
-    "SELECT * FROM Reservation WHERE utilisateur_id = ?",
-    [req.params.userId],
-    (err, results) => {
-      if (err) return res.status(500).json({ error: err });
-      res.json(results);
-    }
-  );
-});
-
 // 📅 Séances
-app.post("/seances", authenticateToken, authorizeRole("Admin"), (req, res) => {
-  const { date, heure, salle_id, film_id } = req.body;
-  db.query(
-    "INSERT INTO Seance (date, heure, salle_id, film_id) VALUES (?, ?, ?, ?)",
-    [date, heure, salle_id, film_id],
-    (err, result) => {
-      if (err) return res.status(500).json({ error: err });
-      res.status(201).json({
-        message: "Séance ajoutée avec succès",
-        seanceId: result.insertId,
-      });
-    }
-  );
-});
-
 app.get("/seances", (req, res) => {
   db.query(
     `SELECT Seance.id, Seance.date, Seance.heure, Salle.numero AS salle, Film.titre AS film
@@ -209,7 +181,7 @@ app.get("/seances", (req, res) => {
   );
 });
 
-// 🚀 Lancer le serveur (✨ Dynamique pour Render)
+// 🚀 Lancer le serveur
 app.listen(PORT, () => {
   console.log(`✅ Serveur API Cinephoria démarré sur le port ${PORT}`);
 });

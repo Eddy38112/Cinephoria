@@ -1,3 +1,4 @@
+HEAD
 # 🎬 Cinéphoria - Système de gestion de cinéma 🎥
 
 Cinéphoria est une plateforme permettant aux utilisateurs de réserver des places de cinéma, aux employés de signaler des incidents et aux administrateurs de gérer les films et séances.
@@ -25,3 +26,7 @@ Cinéphoria est une plateforme permettant aux utilisateurs de réserver des plac
 git clone https://github.com/Eddy38112/Cinephoria.git
 cd Cinephoria
 ```
+
+# Cinephoria
+ECF pour Studi
+ddda39b3d7827edd4f784f819784c7c5c194f7b1

@@ -7,30 +7,35 @@ const bodyParser = require("body-parser");
 const QRCode = require("qrcode"); // 📌 QR Code pour les billets
 
 const app = express();
-const PORT = process.env.PORT || 3000; // 🌐 Port dynamique pour Render
-const SECRET_KEY = "supersecretkey";
+const PORT = process.env.PORT || 10000; // Port Render
+const SECRET_KEY = "supersecretkey"; // Clé pour JWT
 
+// Middleware
 app.use(cors());
 app.use(bodyParser.json());
 
-// 💾 Connexion MySQL (Render + Railway avec variables d'environnement)
+// 🔌 Connexion MySQL avec variables d’environnement
 const db = mysql.createConnection({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
+  host: process.env.DB_HOST, // Exemple: containers-us-west-xxx.railway.app
+  user: process.env.DB_USER, // root
   password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
+  database: process.env.DB_NAME, // Cinephoria
   port: process.env.DB_PORT || 3306,
 });
 
 db.connect((err) => {
-  if (err) console.error("❌ Erreur de connexion à MySQL :", err);
-  else console.log("✅ Connecté à la base de données MySQL");
+  if (err) {
+    console.error("❌ Erreur détaillée de connexion MySQL :", err);
+  } else {
+    console.log("✅ Connecté à la base de données MySQL");
+  }
 });
 
-// 🔒 Middleware Authentification
+// 🔐 Middleware Auth
 const authenticateToken = (req, res, next) => {
   const token = req.header("Authorization");
-  if (!token) return res.status(401).json({ error: "Accès refusé" });
+  if (!token)
+    return res.status(401).json({ error: "Accès refusé : Aucun token" });
   jwt.verify(token, SECRET_KEY, (err, user) => {
     if (err) return res.status(403).json({ error: "Token invalide" });
     req.user = user;
@@ -43,6 +48,11 @@ const authorizeRole = (role) => (req, res, next) => {
     return res.status(403).json({ error: "Accès interdit" });
   next();
 };
+
+// 🏃 Route principale
+app.get("/", (req, res) => {
+  res.send("🎬 Bienvenue sur l'API Cinephoria !");
+});
 
 // 🔑 Authentification
 app.post("/auth/register", async (req, res) => {
@@ -87,6 +97,7 @@ app.post("/auth/login", (req, res) => {
       );
       if (!isPasswordValid)
         return res.status(401).json({ error: "Mot de passe incorrect" });
+
       const token = jwt.sign({ id: user.id, role: user.role }, SECRET_KEY, {
         expiresIn: "24h",
       });
@@ -96,6 +107,18 @@ app.post("/auth/login", (req, res) => {
 });
 
 // 🎬 Films
+app.get("/films", (req, res) => {
+  console.log("📡 Requête GET /films reçue");
+  db.query("SELECT * FROM Film", (err, results) => {
+    if (err) {
+      console.error("❌ Détail de l'erreur SQL :", err);
+      return res.status(500).json({ error: err });
+    }
+    console.log("🎬 Films récupérés :", results);
+    res.json(results);
+  });
+});
+
 app.post("/films", authenticateToken, authorizeRole("Admin"), (req, res) => {
   const { titre, description, duree, affiche } = req.body;
   db.query(
@@ -110,39 +133,6 @@ app.post("/films", authenticateToken, authorizeRole("Admin"), (req, res) => {
   );
 });
 
-app.get("/films", (req, res) => {
-  db.query("SELECT * FROM Film", (err, results) => {
-    if (err) return res.status(500).json({ error: err });
-    res.json(results);
-  });
-});
-
-// ⭐ Avis
-app.post("/avis", authenticateToken, (req, res) => {
-  const { film_id, note, commentaire } = req.body;
-  const utilisateur_id = req.user.id;
-
-  db.query(
-    "INSERT INTO Avis (utilisateur_id, film_id, note, commentaire) VALUES (?, ?, ?, ?)",
-    [utilisateur_id, film_id, note, commentaire],
-    (err) => {
-      if (err) return res.status(500).json({ error: err });
-      res.status(201).json({ message: "Avis ajouté avec succès" });
-    }
-  );
-});
-
-app.get("/avis/:filmId", (req, res) => {
-  db.query(
-    "SELECT * FROM Avis WHERE film_id = ?",
-    [req.params.filmId],
-    (err, results) => {
-      if (err) return res.status(500).json({ error: err });
-      res.json(results);
-    }
-  );
-});
-
 // 🎟️ Réservations avec QR Code
 app.post("/reservations", authenticateToken, async (req, res) => {
   const { seance_id, nb_places } = req.body;
@@ -153,7 +143,6 @@ app.post("/reservations", authenticateToken, async (req, res) => {
     [utilisateur_id, seance_id, nb_places],
     async (err, result) => {
       if (err) return res.status(500).json({ error: err });
-
       const reservationId = result.insertId;
       const qrData = `ReservationID:${reservationId}-UserID:${utilisateur_id}-SeanceID:${seance_id}`;
       const qrCode = await QRCode.toDataURL(qrData);
@@ -167,21 +156,7 @@ app.post("/reservations", authenticateToken, async (req, res) => {
   );
 });
 
-// 📅 Séances
-app.get("/seances", (req, res) => {
-  db.query(
-    `SELECT Seance.id, Seance.date, Seance.heure, Salle.numero AS salle, Film.titre AS film
-     FROM Seance
-     JOIN Salle ON Seance.salle_id = Salle.id
-     JOIN Film ON Seance.film_id = Film.id`,
-    (err, results) => {
-      if (err) return res.status(500).json({ error: err });
-      res.json(results);
-    }
-  );
-});
-
-// 🚀 Lancer le serveur
+// 🏃 Démarrage du serveur
 app.listen(PORT, () => {
   console.log(`✅ Serveur API Cinephoria démarré sur le port ${PORT}`);
 });

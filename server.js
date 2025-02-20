@@ -4,7 +4,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const cors = require("cors");
 const bodyParser = require("body-parser");
-const QRCode = require("qrcode"); // 📌 QR Code pour les billets
+const QRCode = require("qrcode");
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -14,16 +14,15 @@ const SECRET_KEY = "supersecretkey";
 app.use(cors());
 app.use(bodyParser.json());
 
-// 🌐 Connexion MySQL (Railway + Render - Frankfurt)
+// 🌐 Connexion MySQL locale (XAMPP)
 const db = mysql.createConnection({
-  host: process.env.DB_HOST || "frankfurt-mysql-production.up.railway.app",
-  user: process.env.DB_USER || "root",
-  password: process.env.DB_PASSWORD || "p4ssw0rdSuperSecret",
-  database: process.env.DB_NAME || "Cinephoria",
-  port: process.env.DB_PORT || 3306,
+  host: "localhost",
+  user: "root",
+  password: "", // Par défaut avec XAMPP
+  database: "Cinephoria",
+  port: 3306,
 });
 
-// 📡 Connexion MySQL
 db.connect((err) => {
   if (err) {
     console.error("❌ Erreur de connexion à MySQL :", err);
@@ -111,75 +110,6 @@ app.get("/films", (req, res) => {
     if (err) return res.status(500).json({ error: err });
     res.json(results);
   });
-});
-
-// 🎬 Ajouter un film (Admin uniquement)
-app.post("/films", authenticateToken, authorizeRole("Admin"), (req, res) => {
-  const { titre, description, duree, affiche } = req.body;
-  db.query(
-    "INSERT INTO Film (titre, description, duree, affiche) VALUES (?, ?, ?, ?)",
-    [titre, description, duree, affiche],
-    (err, result) => {
-      if (err) return res.status(500).json({ error: err });
-      res.status(201).json({
-        message: "Film ajouté avec succès",
-        filmId: result.insertId,
-      });
-    }
-  );
-});
-
-// 💬 Ajouter un avis
-app.post("/avis", authenticateToken, (req, res) => {
-  const { film_id, note, commentaire } = req.body;
-  const utilisateur_id = req.user.id;
-
-  db.query(
-    "INSERT INTO Avis (utilisateur_id, film_id, note, commentaire) VALUES (?, ?, ?, ?)",
-    [utilisateur_id, film_id, note, commentaire],
-    (err) => {
-      if (err) return res.status(500).json({ error: err });
-      res.status(201).json({ message: "Avis ajouté avec succès" });
-    }
-  );
-});
-
-// 🎟️ Créer une réservation avec QR Code
-app.post("/reservations", authenticateToken, async (req, res) => {
-  const { seance_id, nb_places } = req.body;
-  const utilisateur_id = req.user.id;
-
-  db.query(
-    "INSERT INTO Reservation (utilisateur_id, seance_id, nb_places) VALUES (?, ?, ?)",
-    [utilisateur_id, seance_id, nb_places],
-    async (err, result) => {
-      if (err) return res.status(500).json({ error: err });
-
-      const reservationId = result.insertId;
-      const qrData = `ReservationID:${reservationId}-UserID:${utilisateur_id}-SeanceID:${seance_id}`;
-      const qrCode = await QRCode.toDataURL(qrData);
-
-      res.status(201).json({
-        message: "Réservation créée avec succès",
-        reservationId: reservationId,
-        qrCode: qrCode,
-      });
-    }
-  );
-});
-
-// 📅 Récupérer toutes les séances
-app.get("/seances", (req, res) => {
-  db.query(
-    `SELECT Seance.id, Seance.date, Seance.heure, Salle.numero AS salle, Film.titre AS film
-     FROM Seance
-     JOIN Salle ON Seance.salle_id = Salle.id
-     JOIN Film ON Seance.film_id = Film.id`,
-    (err, results) => {
-      if (err) return res.status(500).json({ error: err });
-      res.json(results);
-    }
-  );
 });
 
 // 🌟 Endpoint de test

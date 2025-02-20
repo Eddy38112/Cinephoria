@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Inscription - Cinéphoria</title>
+    <link rel="stylesheet" href="assets/css/style.css" />
+  </head>
+  <body>
+    <main>
+      <h2>Créer un compte 📝</h2>
+      <form id="register-form">
+        <input type="text" id="nom" placeholder="Nom" required /><br />
+        <input type="email" id="email" placeholder="Email" required /><br />
+        <input
+          type="password"
+          id="password"
+          placeholder="Mot de passe"
+          required
+        /><br />
+        <button type="submit">S'inscrire</button>
+      </form>
+    </main>
+
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    <script>
+      document
+        .getElementById("register-form")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const user = {
+            nom: document.getElementById("nom").value,
+            email: document.getElementById("email").value,
+            mot_de_passe: document.getElementById("password").value,
+            role: "Client",
+          };
+          const response = await register(user);
+          if (response.message) {
+            alert("Inscription réussie !");
+            window.location.href = "login.html";
+          } else {
+            alert("Erreur lors de l'inscription");
+          }
+        });
+    </script>
+  </body>
+</html>

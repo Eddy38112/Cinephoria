@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Films - Cinéphoria</title>
+    <link rel="stylesheet" href="assets/css/style.css" />
+  </head>
+  <body>
+    <main>
+      <h2>🎬 Tous les films</h2>
+      <section id="films-container"></section>
+    </main>
+
+    <script src="js/api.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", async () => {
+        const films = await fetchFilms();
+        const container = document.getElementById("films-container");
+        if (films.length === 0) {
+          container.innerHTML = "<p>Aucun film disponible.</p>";
+          return;
+        }
+        container.innerHTML = films
+          .map(
+            (film) => `
+          <div>
+            <img src="${film.affiche}" alt="${film.titre}" width="200">
+            <h3>${film.titre}</h3>
+            <p>${film.description}</p>
+          </div>`
+          )
+          .join("");
+      });
+    </script>
+  </body>
+</html>

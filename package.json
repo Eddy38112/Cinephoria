@@ -2,7 +2,7 @@
   "name": "cinephoria",
   "version": "1.0.0",
   "description": "Cinéphoria est une plateforme permettant aux utilisateurs de réserver des places de cinéma, aux employés de signaler des incidents et aux administrateurs de gérer les films et séances.",
-  "main": "index.js",
+  "main": "server.js",
   "directories": {
     "doc": "docs"
   },
@@ -20,5 +20,8 @@
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.12.0",
     "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "@flydotio/dockerfile": "^0.7.8"
   }
 }
